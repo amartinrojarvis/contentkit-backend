@@ -22,7 +22,7 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'contentkit-alpha-dev-ke
 
 # Constants
 DEMO_MODE = os.environ.get('DEMO_MODE', 'false').lower() == 'true'
-DEMO_GENERATIONS = 2  # Generaciones gratuitas en modo demo
+DEMO_GENERATIONS = 999 if DEMO_MODE else 2  # Ilimitado (prácticamente) en modo demo
 
 PLANS = {
     'starter': {'price': 5000, 'posts_per_month': 4, 'sessions_per_month': 0},    # 50€ = 5000 cents
