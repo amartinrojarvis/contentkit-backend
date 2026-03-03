@@ -6,8 +6,8 @@ Con PostgreSQL para persistencia real
 
 import os
 import uuid
-import psycopg2
-import psycopg2.extras
+import psycopg
+from psycopg.rows import dict_row
 from datetime import datetime, timedelta
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -24,13 +24,13 @@ DATABASE_URL = os.environ.get('DATABASE_URL')
 def get_db():
     if not DATABASE_URL:
         raise Exception("DATABASE_URL not set")
-    return psycopg2.connect(DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor)
+    return psycopg.connect(DATABASE_URL, row_factory=dict_row)
 
 # Initialize DB
 def init_db():
     with get_db() as conn:
-        with conn.cursor() as cur:
-            with open('schema.sql', 'r') as f:
+        with open('schema.sql', 'r') as f:
+            with conn.cursor() as cur:
                 cur.execute(f.read())
         conn.commit()
 
