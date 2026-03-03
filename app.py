@@ -21,6 +21,9 @@ CORS(app)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'contentkit-alpha-dev-key')
 
 # Constants
+DEMO_MODE = os.environ.get('DEMO_MODE', 'false').lower() == 'true'
+DEMO_GENERATIONS = 2  # Generaciones gratuitas en modo demo
+
 PLANS = {
     'starter': {'price': 5000, 'posts_per_month': 4, 'sessions_per_month': 0},    # 50€ = 5000 cents
     'pro': {'price': 9900, 'posts_per_month': 8, 'sessions_per_month': 1},        # 99€
@@ -79,16 +82,20 @@ def get_plans():
         plans_display[plan_id] = {
             'id': plan_id,
             'price_eur': plan_data['price'] / 100,
-            'posts_per_month': plan_data['posts_per_month'],
-            'sessions_per_month': plan_data['sessions_per_month'],
+            'posts_per_month': DEMO_GENERATIONS if DEMO_MODE else plan_data['posts_per_month'],
+            'sessions_per_month': 0 if DEMO_MODE else plan_data['sessions_per_month'],
             'features': [
-                f"{plan_data['posts_per_month']} publicaciones/mes",
+                f"{DEMO_GENERATIONS if DEMO_MODE else plan_data['posts_per_month']} publicaciones",
                 "Imágenes con ChatGPT Image 1.5",
                 "Copy + hashtags optimizados",
                 "Estrategia de contenido IA"
-            ] + ([f"{plan_data['sessions_per_month']} sesión con Alberto"] if plan_data['sessions_per_month'] > 0 else [])
+            ] + ([f"{plan_data['sessions_per_month']} sesión con Alberto"] if not DEMO_MODE and plan_data['sessions_per_month'] > 0 else [])
         }
-    return jsonify({'plans': plans_display})
+    return jsonify({
+        'plans': plans_display,
+        'demo_mode': DEMO_MODE,
+        'demo_message': 'Modo DEMO: 2 generaciones gratuitas, sin pagos reales' if DEMO_MODE else None
+    })
 
 # ============== AUTH & USER ==============
 
@@ -116,8 +123,13 @@ def register():
         return jsonify({"error": "Usuario ya existe"}), 409
     
     # En producción: crear suscripción en Stripe
-    # stripe_customer = stripe.Customer.create(email=email, name=name)
-    # stripe_subscription = stripe.Subscription.create(...)
+    # Si DEMO_MODE, permitir sin pago
+    if not DEMO_MODE:
+        # Aquí iría la lógica de Stripe real
+        pass  # Placeholder para Stripe
+    
+    # Si es DEMO, limitar generaciones
+    posts_allowed = DEMO_GENERATIONS if DEMO_MODE else PLANS[plan_id]['posts_per_month']
     
     user = {
         'id': str(uuid.uuid4()),
@@ -126,15 +138,16 @@ def register():
         'name': name,
         'brand_name': brand_name,
         'plan_id': plan_id,
-        'subscription_status': 'active',  # pending, active, canceled, past_due
-        'posts_allowed': PLANS[plan_id]['posts_per_month'],
+        'subscription_status': 'active',
+        'posts_allowed': posts_allowed,
         'posts_used_this_period': 0,
-        'sessions_allowed': PLANS[plan_id]['sessions_per_month'],
+        'sessions_allowed': 0 if DEMO_MODE else PLANS[plan_id]['sessions_per_month'],
         'sessions_used_this_period': 0,
         'current_period_start': datetime.now().isoformat(),
-        'current_period_end': (datetime.now() + timedelta(days=30)).isoformat(),
-        'stripe_customer_id': None,  # stripe_customer.id
-        'stripe_subscription_id': None,  # stripe_subscription.id
+        'current_period_end': (datetime.now() + timedelta(days=365 if DEMO_MODE else 30)).isoformat(),
+        'stripe_customer_id': 'demo' if DEMO_MODE else None,
+        'stripe_subscription_id': 'demo' if DEMO_MODE else None,
+        'demo_mode': DEMO_MODE,
         'created_at': datetime.now().isoformat(),
         'onboarding_completed': False
     }
