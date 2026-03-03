@@ -18,7 +18,7 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key')
 
 # Config
 DEMO_MODE = os.environ.get('DEMO_MODE', 'true').lower() == 'true'
-DB_FILE = '/tmp/contentkit.db'  # SQLite en disco (persiste en Render hasta redeploy)
+DB_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'contentkit.db')
 
 # Init DB
 def init_db():
