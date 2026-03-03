@@ -91,3 +91,4 @@ Header requerido: `X-Admin-Key: tu-admin-key`
 
 *ContentKit Alpha - Backend API*
 # Force redeploy mar 03 mar 2026 12:16:10 CET
+# Redeploy mar 03 mar 2026 12:33:25 CET
