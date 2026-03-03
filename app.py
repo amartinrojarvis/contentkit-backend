@@ -66,6 +66,15 @@ def get_db():
     conn.row_factory = sqlite3.Row
     return conn
 
+@app.route('/api/init', methods=['POST'])
+def init_endpoint():
+    """Initialize database - call this if tables don't exist"""
+    try:
+        init_db()
+        return jsonify({"status": "ok", "message": "Database initialized"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 # Health check
 @app.route('/api/health', methods=['GET'])
 def health():
@@ -294,7 +303,23 @@ def list_posts():
     
     return jsonify({"posts": posts})
 
+@app.route('/api/init', methods=['POST'])
+def init_endpoint():
+    """Initialize database - call this if tables don't exist"""
+    try:
+        init_db()
+        return jsonify({"status": "ok", "message": "Database initialized"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 if __name__ == '__main__':
     init_db()
     print("✅ SQLite database initialized")
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+
+# Initialize on import (for gunicorn)
+try:
+    init_db()
+    print("✅ Database initialized on import")
+except Exception as e:
+    print(f"⚠️ DB init on import: {e}")
