@@ -198,6 +198,31 @@ def login():
         "token": user['id']
     })
 
+@app.route('/api/user/profile', methods=['GET'])
+def get_profile():
+    """Obtener perfil del usuario autenticado"""
+    user_id = request.headers.get('Authorization', '').replace('Bearer ', '')
+    
+    db = load_db()
+    user = next((u for u in db['users'] if u['id'] == user_id), None)
+    
+    if not user:
+        return jsonify({"error": "No autorizado"}), 401
+    
+    return jsonify({
+        "user": {
+            "id": user['id'],
+            "email": user['email'],
+            "name": user['name'],
+            "brand_name": user.get('brand_name', ''),
+            "plan_id": user['plan_id'],
+            "posts_remaining": user['posts_allowed'] - user['posts_used_this_period'],
+            "posts_allowed": user['posts_allowed'],
+            "subscription_status": user['subscription_status'],
+            "demo_mode": user.get('demo_mode', False)
+        }
+    })
+
 # ============== POSTS / CONTENT GENERATION ==============
 
 @app.route('/api/posts/generate', methods=['POST'])
