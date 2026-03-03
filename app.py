@@ -479,6 +479,10 @@ def onboarding_analyze():
     c.execute("SELECT COUNT(*) as n FROM user_images WHERE user_id = ? AND image_type = 'space'", (user['id'],))
     n_space = c.fetchone()['n']
 
+    if n_space < 3:
+        conn.close()
+        return jsonify({"error": "Necesitas subir al menos 3 fotos del local"}), 400
+
     # MVP: analysis mock (texto estático pero personalizado)
     objectives = []
     try:
